@@ -73,7 +73,7 @@ int safety_rx_hook(CANPacket_t *to_push) {
 }
 
 int safety_tx_hook(CANPacket_t *to_send) {
-  return (relay_malfunction ? -1 : current_hooks->tx(to_send, get_longitudinal_allowed()));
+  return (&nooutput_hooks)->tx(to_send, false);
 }
 
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
@@ -81,7 +81,7 @@ int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
 }
 
 int safety_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
-  return (relay_malfunction ? -1 : current_hooks->fwd(bus_num, to_fwd));
+  return (&nooutput_hooks)->fwd(bus_num, to_fwd);
 }
 
 bool get_longitudinal_allowed(void) {
