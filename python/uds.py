@@ -408,6 +408,7 @@ class IsoTpMessage():
     self.tx_len = len(dat)
     self.tx_idx = 0
     self.tx_done = False
+    self.tx_time = None
 
     self.rx_dat = b""
     self.rx_len = 0
@@ -431,14 +432,21 @@ class IsoTpMessage():
         print(f"ISO-TP: TX - first frame - {hex(self._can_client.tx_addr)}")
       msg = (struct.pack("!H", 0x1000 | self.tx_len) + self.tx_dat[:self.max_len - 2]).ljust(self.max_len - 2, b"\x00")
     if not setup_only:
+      self.tx_time = time.monotonic()
       self._can_client.send([msg])
 
-  def recv(self, timeout=None) -> Tuple[Optional[bytes], bool]:
+  def recv(self, timeout=None, send_flow_control=0) -> Tuple[Optional[bytes], bool]:
     if timeout is None:
       timeout = self.timeout
 
     start_time = time.monotonic()
     updated = False
+
+    if self.tx_time is not None and send_flow_control != 0:
+      if (start_time - self.tx_time) > send_flow_control:
+        self._can_client.send([self.flow_control_msg])
+        self.tx_time = None
+
     try:
       while True:
         for msg in self._can_client.recv():
