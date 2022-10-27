@@ -103,12 +103,12 @@ static int ford_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   // Safety check for Lane_Assist_Data1 action
   if (addr == MSG_Lane_Assist_Data1) {
-    // Do not allow steering using Lane_Assist_Data1 (Lane-Departure Aid).
-    // This message must be sent for Lane Centering to work, and can include
-    // values such as the steering angle or lane curvature for debugging,
-    // but the action (LkaActvStats_D2_Req) must be set to zero.
+    // Signal: LkaActvStats_D2_Req
     unsigned int action = GET_BYTE(to_send, 0) >> 5;
-    if (action != 0U) {
+    bool steer_control_enabled = action != 0U;
+
+    // No steer control allowed when controls are not allowed
+    if (!controls_allowed && steer_control_enabled) {
       tx = 0;
     }
   }
